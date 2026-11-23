@@ -21,10 +21,10 @@ print("Jogo: Prisão solitária, Dificuldade: Valete de copas\n",
 print("Você se aproxima de um outro jogador e pergunta seu naipe, o jogador oferece responder somente se você dizer seu naipe")
 
 while True:
-    Dica = input("Observar situação de jogo? S/N\n")
+    Dica = input("Observar situação de jogo? S/N\n").strip().upper()
     if Dica == "S":
         print (f"Esse jogador me parece {Fuzzy.Suspicion([Fuzzy.Suspicious(1),Fuzzy.Uncertain(1),Fuzzy.Not_Suspicious(1)])}, ele têm {Fuzzy.Allyship([Fuzzy.Few(2,Players),Fuzzy.Some(2,Players),Fuzzy.Many(2,Players)])} aliados, no momento a chance de qualquer um ser o Valete é... {1/Players}")
-    ação = input("\nMentir (a), Contar a verdade (b), Recusar (c)")
+    ação = input("\nMentir (a), Contar a verdade (b), Recusar (c)").strip().lower()
     if ação == "c":
         print("Você vai embora")
         break
