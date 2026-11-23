@@ -74,16 +74,16 @@ def Very_likely(n):
 #Allyship rating
 
 def Few(a,n):
-    if n <= 0:
+    if n <= 10:
         return 0
     if a >= 5 and a/n > 0.35:
         return 0
     if a/n <= 0.25:
         return 1
-    return (n-a)/a
+    return (n-a)/n
 
 def Some(a,n):
-    if n <= 0:
+    if n <= 10:
         return 0
     if a/19 >= 10/19:
         return (n-a)/n
@@ -92,13 +92,14 @@ def Some(a,n):
     return a/n
 
 def Many(a,n):
-    if n <= 0:
+    if n <= 10:
         return 0
     if a <= 3 and a/n > 0.35:
         return 0
     if a/n >= 0.5:
         return 1
     return a/n
+       
 
 
 
