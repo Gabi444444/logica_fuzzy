@@ -33,7 +33,7 @@ def Not_Suspicious(x):
 def Very_unlikely(n):
     if n >= 16:
         return 1
-    if n <= 0:
+    if n <= 10:
         return 0
     return n/19
 
