@@ -43,34 +43,16 @@ def Fuzzy_perfeita(res,A):
         return 1
     return 0
 
-As = True
-for i in range(4,23):
-    conjuntos = [Fuzzy_péssima(i,As), Fuzzy_ruim(i,As), Fuzzy_moderada(i,As), Fuzzy_boa(i,As),Fuzzy_ótima(i,As),Fuzzy_perfeita(i,As)]
-    x = conjuntos[0]
-    y = 0
-    for w in range(len(conjuntos)):
-        if conjuntos[w] > x:
-            x = conjuntos[w]
-            y = w
-    print(f"para {i} o melhor conjunto é {y} pelo indice {x}")
+if __name__ == "__main__":
+    As = True
+    for i in range(4, 23):
+        conjuntos = [Fuzzy_péssima(i, As), Fuzzy_ruim(i, As), Fuzzy_moderada(i, As), Fuzzy_boa(i, As), Fuzzy_ótima(i, As), Fuzzy_perfeita(i, As)]
+        x = conjuntos[0]
+        y = 0
+        for w in range(len(conjuntos)):
+            if conjuntos[w] > x:
+                x = conjuntos[w]
+                y = w
+        print(f"para {i} o melhor conjunto é {y} pelo indice {x}")
 
-def Decide(i,As,bank):
-    conjuntos = [Fuzzy_péssima(i,As), Fuzzy_ruim(i,As), Fuzzy_moderada(i,As), Fuzzy_boa(i,As),Fuzzy_ótima(i,As),Fuzzy_perfeita(i,As)]
-    x = conjuntos[0]
-    y = 0
-    for w in range(len(conjuntos)):
-        if conjuntos[w] > x:
-            x = conjuntos[w]
-            y = w
-    if y == 0 or y == 1:
-        return 1
-    if y == 2:
-        return bank/10
-    if y == 3 or y == 4:
-        return int(bank*x)
-    return bank
-
-print(Decide(i,As,50))
-    
-
-
+    print(Decide(i, As, 50))
