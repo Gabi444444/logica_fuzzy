@@ -22,7 +22,7 @@ while True:
     if Dica == "S":
         Suspect = [Fuzzy.Suspicious(Ippei.Ownkarma),Fuzzy.Uncertain(Ippei.Ownkarma),Fuzzy.Not_Suspicious(Ippei.Ownkarma)]
         Ally_Set = [Fuzzy.Few(Ippei.alliances,Players),Fuzzy.Some(Ippei.alliances,Players),Fuzzy.Many(Ippei.alliances,Players)]
-        print (f"Esse jogador me parece {Fuzzy.Suspicion(Suspect)}, ele têm {Fuzzy.Allyship(Ally_Set)} aliados, no momento a chance de qualquer um ser o Valete é... {1/Players*100}%")
+        print(f"Esse jogador me parece {Fuzzy.Suspicion(Suspect)}, ele têm {Fuzzy.Allyship(Ally_Set)} aliados, no momento a chance de qualquer um ser o Valete é... {1/Players*100:.1f}%")
         
     ação = input("\nMentir (a), Contar a verdade (b), Recusar (c)").strip().lower()
     if ação == "c":
