@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Nov 21 12:11:42 2026
-
-@author: User
-"""
-
 #player's negative Karma
 
 def Suspicious(x):
@@ -161,8 +154,36 @@ def Danger_Lie(Players,Allies):
     return int(2 + 2 * abs(3-Likelyhood_inc) + 3*Ally_Set[2] + 2*(Ally_Set[1]) - 3*(Ally_Set[0]))
 
 class Bot():
-    def __init__(self):
-        self.Pos_karma = 1
+    def __init__(self,karma,Allies,Trust,Current_suit):
+        self.Ownkarma = karma
+        self.alliances = Allies
+        self.Player_Karma = 0
+        self.Trust_meter = Trust
+        self.Suit = Current_suit
+    def Lie(self,Danger_l,suit):
+        if Danger_l >= 7:
+            return suit
+        Danger_l = Danger_l + self.Trust_meter
+        if Danger_l >= 7:
+            return suit
+        while True:
+            i = randint(0,3)
+            if suits[i] != suit:
+                return suits[i]
+    def Trust(self,Danger_t,suit):
+        if Danger_t <= 4:
+            return suit
+        Danger_t = Danger_t - self.Trust_meter
+        if Danger_t <= 4:
+            return suit
+        if self.alliances >= 1:
+            chance = randint(1,3)
+            if chance <= 2:
+                return self.Suit
+        while True:
+            i = randint(0,3)
+            if suits[i] != suit:
+                return suits[i]
         
     
     
