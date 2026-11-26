@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prisão Solitária — Sistema de Inferência Fuzzy</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --card: #1a1d26;
+      --border: #2c3140;
+      --text: #f0f2f6;
+      --muted: #9aa4b2;
+      --accent: #e63946;
+      --accent-hover: #c92a36;
+      --blue: #3b82f6;
+      --green: #10b981;
+      --amber: #f59e0b;
+    }
+
+    * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+      line-height: 1.5;
+    }
+
+    .container { max-width: 1180px; margin: 0 auto; }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    header h1 { margin: 0; font-size: 1.6rem; display: flex; align-items: center; gap: 10px; }
+    header p { margin: 4px 0 0; color: var(--muted); font-size: 0.95rem; }
+
+    details.rules {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 24px;
+    }
+    details.rules summary { cursor: pointer; font-weight: 600; color: #e2e8f0; }
+    details.rules ul { margin: 10px 0 0 20px; color: var(--muted); font-size: 0.92rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 310px 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 1.12rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    .card h3 { margin: 16px 0 8px; font-size: 0.95rem; color: #cbd5e1; }
+
+    .control { margin-bottom: 14px; }
+    .control label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.88rem;
+      color: #cbd5e1;
+      margin-bottom: 4px;
+    }
+    .control input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+
+    .bar-group { margin-bottom: 12px; }
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.84rem;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+    .bar-bg {
+      width: 100%;
+      height: 10px;
+      background: #262b38;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      background: var(--blue);
+      transition: width 0.25s ease;
+    }
+    .bar-fill.red { background: var(--accent); }
+    .bar-fill.amber { background: var(--amber); }
+    .bar-fill.green { background: var(--green); }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      background: #2b3142;
+      color: #fff;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .metric-box {
+      background: #13161f;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+    .metric-box span { display: block; font-size: 0.78rem; color: var(--muted); }
+    .metric-box strong { font-size: 1.35rem; color: #fff; }
+
+    .suit-banner {
+      background: #13161f;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .suit-big { font-size: 1.4rem; font-weight: 700; margin-top: 4px; }
+
+    .radio-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .radio-item {
+      background: #13161f;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.92rem;
+    }
+    .radio-item:hover { border-color: #4b5563; }
+
+    button {
+      width: 100%;
+      padding: 11px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-secondary { background: #2b3142; color: #e2e8f0; margin-top: 8px; }
+    .btn-secondary:hover { background: #374151; }
+
+    .result-box {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 8px;
+      background: #13161f;
+      border-left: 4px solid var(--blue);
+      font-size: 0.92rem;
+      display: none;
+    }
+    .result-box p { margin: 6px 0; }
+    .info-pill {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      font-size: 0.86rem;
+      color: #bfdbfe;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>🃏 Prisão Solitária — Sistema de Inferência Fuzzy</h1>
+        <p>Simulação de tomada de decisão sob incerteza baseada no jogo <strong>Valete de Copas</strong> (<em>Alice in Borderland</em>)</p>
+      </div>
+    </header>
+
+    <details class="rules">
+      <summary>📜 Ver Regras do Jogo (Domínio Modelado)</summary>
+      <ul>
+        <li>A cada rodada, um naipe aparece no visor traseiro do seu colar (você não pode ver o próprio símbolo).</li>
+        <li>Ao final da rodada, cada jogador entra em uma cela e diz seu naipe em voz alta. Errar resulta em <strong>Game Over</strong>.</li>
+        <li>Dentre os jogadores está o <strong>Valete de Copas</strong>. Você precisa interagir e avaliar riscos para descobrir seu naipe sem cair em blefes.</li>
+      </ul>
+    </details>
+
+    <div class="grid">
+      <!-- COLUNA 1: ENTRADAS -->
+      <div class="card">
+        <h2>⚙️ 1. Entradas (Crisp)</h2>
+
+        <div class="control">
+          <label>Seu Karma Positivo <strong id="val_pos">2</strong></label>
+          <input type="range" id="pos_karma" min="0" max="5" value="2" oninput="updateFuzzy()" />
+        </div>
+        <div class="control">
+          <label>Seu Karma Negativo <strong id="val_neg">1</strong></label>
+          <input type="range" id="neg_karma" min="0" max="5" value="1" oninput="updateFuzzy()" />
+        </div>
+        <div class="control">
+          <label>Jogadores Vivos <strong id="val_players">12</strong></label>
+          <input type="range" id="players" min="2" max="19" value="12" oninput="updateFuzzy()" />
+        </div>
+        <div class="control">
+          <label>Seus Aliados <strong id="val_allies">2</strong></label>
+          <input type="range" id="allies" min="0" max="18" value="2" oninput="updateFuzzy()" />
+        </div>
+
+        <h3>🤖 Atributos do Bot (Ippei)</h3>
+        <div class="control">
+          <label>Karma Negativo do Bot <strong id="val_bkarma">1</strong></label>
+          <input type="range" id="bot_karma" min="0" max="5" value="1" oninput="updateFuzzy()" />
+        </div>
+        <div class="control">
+          <label>Aliados do Bot <strong id="val_ballies">2</strong></label>
+          <input type="range" id="bot_allies" min="0" max="18" value="2" oninput="updateFuzzy()" />
+        </div>
+        <div class="control">
+          <label>Medidor de Confiança <strong id="val_btrust">3</strong></label>
+          <input type="range" id="bot_trust" min="0" max="5" value="3" oninput="updateFuzzy()" />
+        </div>
+
+        <button class="btn-secondary" onclick="randomizeSuits()">🔄 Sortear Novos Naipes</button>
+      </div>
+
+      <!-- COLUNA 2: FUZZIFICAÇÃO -->
+      <div class="card">
+        <h2>📊 2. Fuzzificação & Pertinência</h2>
+        <p style="font-size:0.84rem; color:var(--muted); margin-top:0;">
+          Graus de pertinência μ(x) ∈ [0, 1] calculados em tempo real:
+        </p>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <strong style="font-size:0.92rem;">Suspeita sobre Ippei:</strong>
+          <span class="badge" id="lbl_sus">Não suspeito</span>
+        </div>
+
+        <div class="bar-group">
+          <div class="bar-label"><span>Suspeito</span><span id="txt_sus0">0.00</span></div>
+          <div class="bar-bg"><div class="bar-fill red" id="bar_sus0" style="width:0%"></div></div>
+        </div>
+        <div class="bar-group">
+          <div class="bar-label"><span>Incerto</span><span id="txt_sus1">0.00</span></div>
+          <div class="bar-bg"><div class="bar-fill amber" id="bar_sus1" style="width:0%"></div></div>
+        </div>
+        <div class="bar-group">
+          <div class="bar-label"><span>Não Suspeito</span><span id="txt_sus2">1.00</span></div>
+          <div class="bar-bg"><div class="bar-fill green" id="bar_sus2" style="width:100%"></div></div>
+        </div>
+
+        <hr style="border:0; border-top:1px solid var(--border); margin:18px 0;" />
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <strong style="font-size:0.92rem;">Alianças do Bot:</strong>
+          <span class="badge" id="lbl_ally">Poucos</span>
+        </div>
+
+        <div class="bar-group">
+          <div class="bar-label"><span>Poucos</span><span id="txt_ally0">1.00</span></div>
+          <div class="bar-bg"><div class="bar-fill" id="bar_ally0" style="width:100%"></div></div>
+        </div>
+        <div class="bar-group">
+          <div class="bar-label"><span>Alguns</span><span id="txt_ally1">0.00</span></div>
+          <div class="bar-bg"><div class="bar-fill amber" id="bar_ally1" style="width:0%"></div></div>
+        </div>
+        <div class="bar-group">
+          <div class="bar-label"><span>Muitos</span><span id="txt_ally2">0.00</span></div>
+          <div class="bar-bg"><div class="bar-fill green" id="bar_ally2" style="width:0%"></div></div>
+        </div>
+
+        <div class="info-pill" id="valete_prob">
+          🎲 Probabilidade base de qualquer um ser o Valete: <strong>8.3%</strong>
+        </div>
+      </div>
+
+      <!-- COLUNA 3: INFERÊNCIA E DECISÃO -->
+      <div class="card">
+        <h2>🎯 3. Inferência & Ação</h2>
+
+        <div class="metrics">
+          <div class="metric-box">
+            <span>Danger_Trust (Confiar)</span>
+            <strong id="val_dt">0.00 / 10</strong>
+          </div>
+          <div class="metric-box">
+            <span>Danger_Lie (Mentir)</span>
+            <strong id="val_dl">0 / 10</strong>
+          </div>
+        </div>
+
+        <div class="suit-banner">
+          <div style="font-size:0.84rem; color:var(--muted);">Você olha o colar de <strong>Ippei</strong> e vê:</div>
+          <div class="suit-big" id="bot_suit_display">♣️ Paus</div>
+        </div>
+
+        <div class="radio-group">
+          <label class="radio-item">
+            <input type="radio" name="acao" value="a" />
+            <span><strong>Mentir</strong> (inventar outro naipe para Ippei)</span>
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="acao" value="b" checked />
+            <span><strong>Contar a verdade</strong> (dizer o naipe real dele)</span>
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="acao" value="c" />
+            <span><strong>Recusar</strong> (ir embora sem trocar)</span>
+          </label>
+        </div>
+
+        <button class="btn-primary" onclick="runRound()">▶️ Executar Rodada</button>
+
+        <div class="result-box" id="result_box"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const suits = ["Copas", "Ouros", "Espadas", "Paus"];
+    const icons = { Copas: "♥️", Ouros: "♦️", Espadas: "♠️", Paus: "♣️" };
+
+    let yourSuit = suits[Math.floor(Math.random() * 4)];
+    let botSuit = "Paus";
+
+    function randint(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // --- FUNÇÕES DE PERTINÊNCIA (Espelho exato de Fuzzy_functions.py) ---
+    function Suspicious(x) {
+      if (x > 4) return 1;
+      if (x <= 1) return 0;
+      return x / 5;
+    }
+    function Uncertain(x) {
+      if (x === 3) return 1;
+      if (x === 0 || x === 5) return 0;
+      if (x === 2) return (5 - x) / 5;
+      return x / 5;
+    }
+    function Not_Suspicious(x) {
+      if (x <= 1) return 1;
+      if (x >= 4) return 0;
+      return (5 - x) / 6;
+    }
+
+    function Very_unlikely(n) {
+      if (n >= 16) return 1;
+      if (n <= 10) return 0;
+      return n / 19;
+    }
+    function Unlikely(n) {
+      if (n >= 12 && n <= 14) return 1;
+      if (n <= 6 || n >= 17) return 0;
+      return (n - 2) / 19;
+    }
+    function Neutral(n) {
+      if (n <= 11 && n >= 9) return 1;
+      if (n > 16 || n < 3) return 0;
+      if (n < 9) return (n - 2) / 7;
+      if (n > 11) return (n - 1) / 19;
+      return 0;
+    }
+    function Likely(n) {
+      if (n >= 5 && n <= 9) return 1;
+      if (n >= 13 || n < 3) return 0;
+      return (18 - n) / 17;
+    }
+    function Very_likely(n) {
+      if (n <= 3) return 1;
+      if (n >= 8) return 0;
+      return (19 - n) / 19;
+    }
+
+    function Few(a, n) {
+      if (n <= 0) return 0;
+      if (a >= 5 && a / n > 0.35) return 0;
+      if (a / n <= 0.25) return 1;
+      return (n - a) / n;
+    }
+    function Some(a, n) {
+      if (n <= 0) return 0;
+      if (a / 19 >= 10 / 19) return (n - a) / n;
+      if (a >= 16 || a <= 5) return 0;
+      return a / n;
+    }
+    function Many(a, n) {
+      if (n <= 0) return 0;
+      if (a <= 3 && a / n > 0.35) return 0;
+      if (a / n >= 0.5) return 1;
+      return a / n;
+    }
+
+    // --- DEFUZZIFICAÇÃO ---
+    function Suspicion(Set) {
+      const y = Math.max(...Set);
+      for (let i = 0; i < 3; i++) {
+        if (y === Set[i]) {
+          if (i === 0) return "Suspeito";
+          if (i === 1) return "Incerto";
+          return "Não suspeito";
+        }
+      }
+    }
+    function LikelyHood(Set) {
+      const y = Math.max(...Set);
+      for (let i = 0; i < 5; i++) {
+        if (y === Set[i]) return i + 1;
+      }
+    }
+    function Allyship(Set) {
+      const y = Math.max(...Set);
+      for (let i = 0; i < 3; i++) {
+        if (y === Set[i]) {
+          if (i === 0) return "Poucos";
+          if (i === 1) return "Alguns";
+          return "Muitos";
+        }
+      }
+    }
+
+    // --- REGRAS DE PERIGO ---
+    function Danger_Trust(Neg_Karma, Players, Pos_Karma) {
+      const Sus_Set = [Suspicious(Neg_Karma), Uncertain(Neg_Karma), Not_Suspicious(Neg_Karma)];
+      const Likelyhood_Set = [Very_unlikely(Players), Unlikely(Players), Neutral(Players), Likely(Players), Very_likely(Players)];
+      const Likelyhood_inc = LikelyHood(Likelyhood_Set);
+
+      if (Suspicion(Sus_Set) === "Suspeito" && Likelyhood_inc >= 3) return 10;
+      if (Suspicion(Sus_Set) === "Não suspeito" && Likelyhood_inc <= 3) return 3 + (Likelyhood_inc / 2);
+
+      const Suspicion_level = 5 * Sus_Set[0] + Sus_Set[1] - Sus_Set[2];
+      return Suspicion_level + Likelyhood_inc - 0.5 * Pos_Karma;
+    }
+
+    function Danger_Lie(Players, Allies) {
+      const Likelyhood_Set = [Very_unlikely(Players), Unlikely(Players), Neutral(Players), Likely(Players), Very_likely(Players)];
+      const Ally_Set = [Few(Allies, Players), Some(Allies, Players), Many(Allies, Players)];
+      const Alliances = Allyship(Ally_Set);
+      const Likelyhood_inc = LikelyHood(Likelyhood_Set);
+
+      if (Allies === 0) return 6 - Likelyhood_inc;
+      if (Alliances === "Muitos" && Players <= 10) return 10;
+
+      return Math.trunc(2 + 2 * Math.abs(3 - Likelyhood_inc) + 3 * Ally_Set[2] + 2 * Ally_Set[1] - 3 * Ally_Set[0]);
+    }
+
+    // --- MÉTODOS DO BOT ---
+    function botLie(Danger_l, trustMeter, suit) {
+      if (Danger_l >= 7) return suit;
+      if (Danger_l + trustMeter >= 7) return suit;
+      while (true) {
+        const i = randint(0, 3);
+        if (suits[i] !== suit) return suits[i];
+      }
+    }
+
+    function botTrust(Danger_t, trustMeter, alliances, ownSuit, spokenSuit) {
+      if (Danger_t <= 4) return spokenSuit;
+      if (Danger_t - trustMeter <= 4) return spokenSuit;
+      if (alliances >= 1) {
+        if (randint(1, 3) <= 2) return ownSuit;
+      }
+      while (true) {
+        const i = randint(0, 3);
+        if (suits[i] !== spokenSuit) return suits[i];
+      }
+    }
+
+    function clamp01(v) { return Math.min(Math.max(v, 0), 1); }
+
+    function updateFuzzy() {
+      const posKarma = +document.getElementById("pos_karma").value;
+      const negKarma = +document.getElementById("neg_karma").value;
+      const players = +document.getElementById("players").value;
+      const allies = +document.getElementById("allies").value;
+      const botKarma = +document.getElementById("bot_karma").value;
+      const botAllies = +document.getElementById("bot_allies").value;
+      const botTrustVal = +document.getElementById("bot_trust").value;
+
+      document.getElementById("val_pos").textContent = posKarma;
+      document.getElementById("val_neg").textContent = negKarma;
+      document.getElementById("val_players").textContent = players;
+      document.getElementById("val_allies").textContent = allies;
+      document.getElementById("val_bkarma").textContent = botKarma;
+      document.getElementById("val_ballies").textContent = botAllies;
+      document.getElementById("val_btrust").textContent = botTrustVal;
+
+      const susSet = [Suspicious(botKarma), Uncertain(botKarma), Not_Suspicious(botKarma)];
+      document.getElementById("lbl_sus").textContent = Suspicion(susSet);
+      for (let i = 0; i < 3; i++) {
+        const val = clamp01(susSet[i]);
+        document.getElementById(`txt_sus${i}`).textContent = val.toFixed(2);
+        document.getElementById(`bar_sus${i}`).style.width = `${val * 100}%`;
+      }
+
+      const allySet = [Few(botAllies, players), Some(botAllies, players), Many(botAllies, players)];
+      document.getElementById("lbl_ally").textContent = Allyship(allySet);
+      for (let i = 0; i < 3; i++) {
+        const val = clamp01(allySet[i]);
+        document.getElementById(`txt_ally${i}`).textContent = val.toFixed(2);
+        document.getElementById(`bar_ally${i}`).style.width = `${val * 100}%`;
+      }
+
+      document.getElementById("valete_prob").innerHTML =
+        `🎲 Probabilidade base de qualquer um ser o Valete: <strong>${((1 / players) * 100).toFixed(1)}%</strong>`;
+
+      const dt = Danger_Trust(negKarma, players, posKarma);
+      const dl = Danger_Lie(players, allies);
+      document.getElementById("val_dt").textContent = `${dt.toFixed(2)} / 10`;
+      document.getElementById("val_dl").textContent = `${dl} / 10`;
+    }
+
+    function randomizeSuits() {
+      yourSuit = suits[randint(0, 3)];
+      botSuit = suits[randint(0, 3)];
+      document.getElementById("bot_suit_display").textContent = `${icons[botSuit]} ${botSuit}`;
+      document.getElementById("result_box").style.display = "none";
+    }
+
+    function runRound() {
+      const posKarma = +document.getElementById("pos_karma").value;
+      const negKarma = +document.getElementById("neg_karma").value;
+      const players = +document.getElementById("players").value;
+      const allies = +document.getElementById("allies").value;
+      const botAllies = +document.getElementById("bot_allies").value;
+      const botTrustVal = +document.getElementById("bot_trust").value;
+
+      const acao = document.querySelector('input[name="acao"]:checked').value;
+      const box = document.getElementById("result_box");
+      box.style.display = "block";
+
+      if (acao === "c") {
+        box.style.borderLeftColor = "var(--amber)";
+        box.innerHTML = `
+          <p>🚶 <strong>Você recusou a troca</strong> e se afastou.</p>
+          <p>🃏 Seu naipe real (oculto) era: <strong>${icons[yourSuit]} ${yourSuit}</strong></p>
+        `;
+        return;
+      }
+
+      let spokenSuit = botSuit;
+      let actionHtml = "";
+      if (acao === "a") {
+        while (true) {
+          const i = randint(0, 3);
+          if (suits[i] !== botSuit) {
+            spokenSuit = suits[i];
+            break;
+          }
+        }
+        box.style.borderLeftColor = "var(--accent)";
+        actionHtml = `<p>🗣️ Você <strong>mentiu</strong> dizendo que o naipe dele é <strong>${icons[spokenSuit]} ${spokenSuit}</strong>.</p>`;
+      } else {
+        box.style.borderLeftColor = "var(--green)";
+        actionHtml = `<p>🗣️ Você <strong>disse a verdade</strong> informando <strong>${icons[spokenSuit]} ${spokenSuit}</strong>.</p>`;
+      }
+
+      const dt = Danger_Trust(negKarma, players, posKarma);
+      const dl = Danger_Lie(players, allies);
+
+      const tell = botLie(dl, botTrustVal, yourSuit);
+      const decision = botTrust(dt, botTrustVal, botAllies, botSuit, spokenSuit);
+
+      box.innerHTML = `
+        ${actionHtml}
+        <hr style="border:0; border-top:1px solid var(--border); margin:8px 0;" />
+        <p>💬 <strong>O que Ippei disse sobre o seu colar:</strong> ${icons[tell]} ${tell}</p>
+        <p>🧠 <strong>Decisão final adotada por Ippei:</strong> ${icons[decision]} ${decision}</p>
+        <p>🃏 <strong>Seu naipe real (oculto):</strong> ${icons[yourSuit]} ${yourSuit}</p>
+      `;
+    }
+
+    updateFuzzy();
+  </script>
+</body>
+</html>
